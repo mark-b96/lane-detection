@@ -40,6 +40,11 @@ def get_arguments() -> argparse.Namespace:
         help='Batch size used for model training',
         default=8
     )
+    a.add_argument(
+        '--train_res',
+        type=tuple,
+        default=(80, 80)
+    )
 
     args = a.parse_args()
     return args
@@ -107,7 +112,7 @@ def process_frame(video, inference, frame, ort_session):
 def main():
     args = get_arguments()
     batch_size = args.batch_size  # Adjust depending on amount RAM
-    image_resolution = (80, 80)
+    image_resolution = args.train_res
     video_path = args.i
     video_root = os.path.dirname(video_path)
     video_name, video_format = video_path.split('/')[-1].split('.')
