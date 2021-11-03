@@ -5,13 +5,13 @@ import argparse
 import torch.nn as nn
 import torchvision.transforms as transforms
 
-from model import CNN
-from training import ModelTraining
-from inference import Inference
-from data_handler import CustomDataset, DataHandler
-from video import Video
-from user_interface import UserInterface
-from visualisation import Visualiser
+from lane_detection.model import CNN
+from lane_detection.training import ModelTraining
+from lane_detection.inference import Inference
+from lane_detection.data_handler import CustomDataset, DataHandler
+from lane_detection.video import Video
+from lane_detection.user_interface import UserInterface
+from lane_detection.visualisation import Visualiser
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
@@ -32,7 +32,7 @@ def get_arguments() -> argparse.Namespace:
     a.add_argument(
         '--weights',
         type=str,
-        default='/home/mark/Documents/ml_data/lane_detection/'
+        default='/home/mark/Documents/ml_data/lane_detection'
     )
     a.add_argument(
         '--batch_size',
@@ -131,14 +131,14 @@ def main():
 
     if should_train:
         train_dataset = CustomDataset(
-            image_path='./data/custom/train/images',
-            label_path='./data/custom/train/labels',
+            image_path=f'{models_root}/custom/train/images',
+            label_path=f'{models_root}/custom/train/labels',
             transform=train_transform
         )
 
         test_dataset = CustomDataset(
-            image_path='./data/custom/test/images',
-            label_path='./data/custom/test/labels',
+            image_path=f'{models_root}/custom/test/images',
+            label_path=f'{models_root}/custom/test/labels',
             transform=train_transform
         )
 
@@ -154,17 +154,17 @@ def main():
 
         model_data.save_torch_model(
             model=cnn_model,
-            path='./data/weights/model_v4.pth'
+            path=f'{models_root}/weights/model_v4.pth'
         )
 
         model_data.save_onnx_model(
             model=cnn_model,
-            path='./data/weights/model_v4.onnx',
+            path=f'{models_root}/weights/model_v4.onnx',
             dummy_input=torch.randn(1, 3, image_resolution[0], image_resolution[1])
         )
 
     ort_session = model_data.load_onnx_model(
-        path=f'{models_root}weights/model_v4.onnx'
+        path=f'{models_root}/weights/model_v4.onnx'
     )
 
     inference = Inference(
