@@ -5,11 +5,11 @@ import numpy as np
 
 
 class Video:
-    def __init__(self, _input_video: str, _video_name: str, _skip_frames: int, _ui):
-        self.ui = _ui
-        self.input_video = _input_video
-        self.video_name = _video_name
-        self.skip_frames = _skip_frames
+    def __init__(self, input_video_path: str, video_name: str, skip_frames: int, ui):
+        self.ui = ui
+        self.input_video = input_video_path
+        self.video_name = video_name
+        self.skip_frames = skip_frames
         self.video_capture = cv2.VideoCapture(self.input_video)
         self.fps = math.ceil(self.video_capture.get(cv2.CAP_PROP_FPS))
         self.frame_width = int(self.video_capture.get(cv2.CAP_PROP_FRAME_WIDTH))

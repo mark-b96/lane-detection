@@ -1,5 +1,6 @@
 import os
 import cv2
+import numpy as np
 import torch
 import argparse
 import torch.nn as nn
@@ -21,7 +22,7 @@ def get_arguments() -> argparse.Namespace:
         '-i',
         type=str,
         help='Path to input video',
-        default='/home/mark/Videos/highway_china_45_55.mp4'
+        default='/home/mark/Videos/lane_data/EB_Nov_16/road_sign_wrong.mp4'
     )
     a.add_argument(
         '--train',
@@ -30,9 +31,29 @@ def get_arguments() -> argparse.Namespace:
         default=False
     )
     a.add_argument(
-        '--weights',
+        '--weights_dir',
         type=str,
-        default='/home/mark/Documents/ml_data/lane_detection'
+        default='/home/mark/Documents/ml_data/lane_detection/weights'
+    )
+    a.add_argument(
+        '--training_images_dir',
+        type=str,
+        default='/home/mark/Documents/ml_data/lane_detection/BDD/train/images'
+    )
+    a.add_argument(
+        '--training_labels_dir',
+        type=str,
+        default='/home/mark/Documents/ml_data/lane_detection/BDD/train/labels'
+    )
+    a.add_argument(
+        '--test_images_dir',
+        type=str,
+        default='/home/mark/Documents/ml_data/lane_detection/BDD/train/images'
+    )
+    a.add_argument(
+        '--test_labels_dir',
+        type=str,
+        default='/home/mark/Documents/ml_data/lane_detection/BDD/test/labels'
     )
     a.add_argument(
         '--batch_size',
@@ -50,7 +71,7 @@ def get_arguments() -> argparse.Namespace:
     return args
 
 
-def train(model, train_dataset, criterion, batch_size: int):
+def train(model, train_dataset, criterion, batch_size: int, model_version: str):
     train_loader = torch.utils.data.DataLoader(
         train_dataset,
         batch_size=batch_size,
@@ -64,6 +85,7 @@ def train(model, train_dataset, criterion, batch_size: int):
         epochs=5,
         learning_rate=0.001,
         batch_size=batch_size,
+        model_version=model_version
     )
 
     model_trainer.train(training_data=train_loader)
@@ -117,31 +139,41 @@ def main():
     video_root = os.path.dirname(video_path)
     video_name, video_format = video_path.split('/')[-1].split('.')
     input_video = f'{video_root}/{video_name}.{video_format}'
-    models_root = args.weights
+    weights_path = args.weights_dir
+    training_images_dir = args.training_images_dir
+    training_labels_dir = args.training_labels_dir
+
     should_train = args.train
 
     train_transform = transforms.Compose(
         [
             transforms.ToTensor(),
             transforms.Resize(image_resolution),
-            transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+            transforms.Normalize(
+                mean=(0.5, 0.5, 0.5),
+                std=(0.5, 0.5, 0.5)
+            )
         ]
     )
     model_data = DataHandler()
 
     if should_train:
+        model_version = 'v25'
         train_dataset = CustomDataset(
-            image_path=f'{models_root}/custom/train/images',
-            label_path=f'{models_root}/custom/train/labels',
+            image_path=training_images_dir,
+            label_path=training_labels_dir,
             transform=train_transform
         )
 
-        test_dataset = CustomDataset(
-            image_path=f'{models_root}/custom/test/images',
-            label_path=f'{models_root}/custom/test/labels',
-            transform=train_transform
-        )
-
+        # imgs = torch.stack([img_t for img_t, _ in train_dataset], dim=3)
+        #
+        # # test_dataset = CustomDataset(
+        # #     image_path=f'{models_root}/custom/test/images',
+        # #     label_path=f'{models_root}/custom/test/labels',
+        # #     transform=train_transform
+        # # )
+        # t_mean = imgs.view(3, -1).mean(dim=1)
+        # t_std = imgs.view(3, -1).std(dim=1)
         cnn_model = CNN().to(device)
         criterion = nn.MSELoss()
 
@@ -150,45 +182,46 @@ def main():
             train_dataset=train_dataset,
             criterion=criterion,
             batch_size=batch_size,
+            model_version=model_version
         )
 
         model_data.save_torch_model(
             model=cnn_model,
-            path=f'{models_root}/weights/model_v4.pth'
+            path=f'{weights_path}/model_{model_version}.pth'
         )
 
         model_data.save_onnx_model(
             model=cnn_model,
-            path=f'{models_root}/weights/model_v4.onnx',
+            path=f'{weights_path}/model_{model_version}.onnx',
             dummy_input=torch.randn(1, 3, image_resolution[0], image_resolution[1])
         )
-
-    ort_session = model_data.load_onnx_model(
-        path=f'{models_root}/weights/model_v4.onnx'
-    )
-
-    inference = Inference(
-        transform=train_transform,
-    )
-
-    ui = UserInterface()
-    video = Video(
-        _input_video=input_video,
-        _video_name=video_name,
-        _skip_frames=1,
-        _ui=ui
-    )
-
-    video_frames = video.get_frame(skip_frames=1)
-    video.create_window('output')
-
-    for frame in video_frames:
-        process_frame(
-            video=video,
-            inference=inference,
-            frame=frame,
-            ort_session=ort_session
+    else:
+        ort_session = model_data.load_onnx_model(
+            path=f'{weights_path}/model_v25.onnx'
         )
+
+        inference = Inference(
+            transform=train_transform,
+        )
+
+        ui = UserInterface()
+        video = Video(
+            input_video_path=input_video,
+            video_name=video_name,
+            skip_frames=1,
+            ui=ui
+        )
+
+        video_frames = video.get_frame(skip_frames=1)
+        video.create_window('output')
+
+        for frame in video_frames:
+            process_frame(
+                video=video,
+                inference=inference,
+                frame=frame,
+                ort_session=ort_session
+            )
 
 
 if __name__ == '__main__':

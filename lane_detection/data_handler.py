@@ -4,6 +4,8 @@ import torch
 import onnx
 from torch.utils.data import Dataset
 import onnxruntime
+import numpy as np
+# cv2.namedWindow('img', cv2.WINDOW_GUI_NORMAL)
 
 
 class CustomDataset(Dataset):
@@ -11,8 +13,8 @@ class CustomDataset(Dataset):
         self.image_path = image_path
         self.label_path = label_path
         self.transform = transform
-        self.image_paths = os.listdir(self.image_path)
-        self.label_paths = os.listdir(self.label_path)
+        self.image_paths = sorted(os.listdir(self.image_path))
+        self.label_paths = sorted(os.listdir(self.label_path))
 
     def __len__(self):
         return len(self.image_paths)
@@ -27,6 +29,13 @@ class CustomDataset(Dataset):
             img = self.transform(img)
             label = self.transform(label)
 
+        # np_output = np.squeeze(img.numpy())
+        # np_output = np.transpose(np_output, (1, 2, 0))
+        # np_output = cv2.cvtColor(np_output, cv2.COLOR_RGB2BGR)
+        # cv2.imshow('img', np_output)
+
+        # cv2.imshow('label', label)
+        cv2.waitKey(0)
         return img, label
 
 
@@ -43,7 +52,7 @@ class DataHandler:
 
     @staticmethod
     def save_onnx_model(model, path: str, dummy_input):
-        torch.onnx.export(model, dummy_input, path)
+        torch.onnx.export(model, dummy_input, path, opset_version=11)
 
     @staticmethod
     def load_onnx_model(path: str):
