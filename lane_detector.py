@@ -1,18 +1,17 @@
 import os
-import cv2
-import numpy as np
 import torch
 import argparse
-import torch.nn as nn
-import torchvision.transforms as transforms
 
 from lane_detection.model import CNN
 from lane_detection.training import ModelTraining
 from lane_detection.inference import Inference
-from lane_detection.data_handler import CustomDataset, DataHandler
-from lane_detection.video import Video
-from lane_detection.user_interface import UserInterface
-from lane_detection.visualisation import Visualiser
+
+from utils.data_handler import CustomDataset, DataHandler
+from utils.video import Video
+from utils.user_interface import UserInterface
+from utils.visualisation import Visualiser
+from utils.frame_processor import FrameProcessor
+
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
@@ -22,7 +21,7 @@ def get_arguments() -> argparse.Namespace:
         '-i',
         type=str,
         help='Path to input video',
-        default='/home/mark/Videos/lane_data/EB_Nov_16/road_sign_wrong.mp4'
+        default='/home/mark/Videos/video_2.mp4'
     )
     a.add_argument(
         '--train',
@@ -71,157 +70,114 @@ def get_arguments() -> argparse.Namespace:
     return args
 
 
-def train(model, train_dataset, criterion, batch_size: int, model_version: str):
-    train_loader = torch.utils.data.DataLoader(
-        train_dataset,
-        batch_size=batch_size,
-        shuffle=True
+def train_model(data_obj, args):
+    model_version = 'v25'
+    train_dataset = CustomDataset(
+        image_path=args.training_images_dir,
+        label_path=args.training_labels_dir,
+        transform=data_obj.train_transform
     )
 
+    # imgs = torch.stack([img_t for img_t, _ in train_dataset], dim=3)
+    #
+    # # test_dataset = CustomDataset(
+    # #     image_path=f'{models_root}/custom/test/images',
+    # #     label_path=f'{models_root}/custom/test/labels',
+    # #     transform=train_transform
+    # # )
+    # t_mean = imgs.view(3, -1).mean(dim=1)
+    # t_std = imgs.view(3, -1).std(dim=1)
+    cnn_model = CNN().to(device)
+
+    train_loader = torch.utils.data.DataLoader(
+        train_dataset,
+        batch_size=args.batch_size,
+        shuffle=True
+    )
     model_trainer = ModelTraining(
-        model=model,
+        model=cnn_model,
         device=device,
-        criterion=criterion,
         epochs=5,
         learning_rate=0.001,
-        batch_size=batch_size,
+        batch_size=args.batch_size,
         model_version=model_version
     )
 
     model_trainer.train(training_data=train_loader)
 
-
-def evaluate(model, test_dataset, criterion, batch_size: int):
-    test_loader = torch.utils.data.DataLoader(
-        test_dataset,
-        batch_size=batch_size,
-        shuffle=True
-    )
-    size = len(test_loader.dataset)
-    num_batches = len(test_loader)
-    test_loss, correct = 0, 0
-
-    with torch.no_grad():
-        for image, label in test_loader:
-            pred = model(image)
-            test_loss += criterion(pred, label).item()
-            correct += (pred.argmax(1) == label).type(torch.float).sum().item()
-
-    test_loss /= num_batches
-    correct /= size
-    print(f"Test Error: \n Accuracy: {(100*correct):>0.1f}%, Avg loss: {test_loss:>8f} \n")
-
-
-def process_frame(video, inference, frame, ort_session):
-    # video.display_frame('input', frame)
-    predicted_image = inference.predict_onnx(
-        image=frame,
-        ort_session=ort_session
+    data_obj.save_torch_model(
+        model=cnn_model,
+        path=f'{args.weights_path}/model_{model_version}.pth'
     )
 
-    frame_width, frame_height = video.resolution
-    vis = Visualiser(
-        frame=frame,
-        frame_width=frame_width,
-        frame_height=frame_height
+    w, h = args.train_res
+    data_obj.save_onnx_model(
+        model=cnn_model,
+        path=f'{args.weights_path}/model_{model_version}.onnx',
+        dummy_input=torch.randn(1, 3, w, h)
     )
-    predicted_image = cv2.resize(predicted_image, video.resolution)
-    vis.draw_lane(predicted_output=predicted_image)
-    video.display_frame('output', frame)
-    video.write_frame(frame)
 
 
-def main():
-    args = get_arguments()
-    batch_size = args.batch_size  # Adjust depending on amount RAM
-    image_resolution = args.train_res
+def run_inference(data_obj, args):
     video_path = args.i
     video_root = os.path.dirname(video_path)
     video_name, video_format = video_path.split('/')[-1].split('.')
     input_video = f'{video_root}/{video_name}.{video_format}'
-    weights_path = args.weights_dir
-    training_images_dir = args.training_images_dir
-    training_labels_dir = args.training_labels_dir
 
+    ort_session_obj = data_obj.load_onnx_model(
+        path=f'{args.weights_dir}/model_v25.onnx'
+    )
+
+    inference_obj = Inference(
+        transform=data_obj.train_transform,
+    )
+
+    ui_obj = UserInterface()
+    video_obj = Video(
+        input_video_path=input_video,
+        video_name=video_name,
+        skip_frames=1,
+        ui=ui_obj
+    )
+
+    video_frames = video_obj.get_frame(skip_frames=1)
+    video_obj.create_window('output')
+
+    visualiser_obj = Visualiser(
+        frame_width=video_obj.frame_width,
+        frame_height=video_obj.frame_height
+    )
+
+    frame_proc_obj = FrameProcessor(
+        visualiser_obj=visualiser_obj,
+        video_obj=video_obj,
+        inference_obj=inference_obj,
+        ort_session_obj=ort_session_obj
+    )
+
+    for frame in video_frames:
+        visualiser_obj.set_frame(frame=frame)
+        frame_proc_obj.process_frame()
+
+
+def main():
+    args = get_arguments()
+    image_resolution = args.train_res
     should_train = args.train
 
-    train_transform = transforms.Compose(
-        [
-            transforms.ToTensor(),
-            transforms.Resize(image_resolution),
-            transforms.Normalize(
-                mean=(0.5, 0.5, 0.5),
-                std=(0.5, 0.5, 0.5)
-            )
-        ]
-    )
-    model_data = DataHandler()
+    data_obj = DataHandler()
+    data_obj.set_train_transform(image_resolution=image_resolution)
 
     if should_train:
-        model_version = 'v25'
-        train_dataset = CustomDataset(
-            image_path=training_images_dir,
-            label_path=training_labels_dir,
-            transform=train_transform
-        )
-
-        # imgs = torch.stack([img_t for img_t, _ in train_dataset], dim=3)
-        #
-        # # test_dataset = CustomDataset(
-        # #     image_path=f'{models_root}/custom/test/images',
-        # #     label_path=f'{models_root}/custom/test/labels',
-        # #     transform=train_transform
-        # # )
-        # t_mean = imgs.view(3, -1).mean(dim=1)
-        # t_std = imgs.view(3, -1).std(dim=1)
-        cnn_model = CNN().to(device)
-        criterion = nn.MSELoss()
-
-        train(
-            model=cnn_model,
-            train_dataset=train_dataset,
-            criterion=criterion,
-            batch_size=batch_size,
-            model_version=model_version
-        )
-
-        model_data.save_torch_model(
-            model=cnn_model,
-            path=f'{weights_path}/model_{model_version}.pth'
-        )
-
-        model_data.save_onnx_model(
-            model=cnn_model,
-            path=f'{weights_path}/model_{model_version}.onnx',
-            dummy_input=torch.randn(1, 3, image_resolution[0], image_resolution[1])
+        train_model(
+            data_obj=data_obj,
+            args=args,
         )
     else:
-        ort_session = model_data.load_onnx_model(
-            path=f'{weights_path}/model_v25.onnx'
+        run_inference(
+            data_obj=data_obj,
+            args=args,
         )
-
-        inference = Inference(
-            transform=train_transform,
-        )
-
-        ui = UserInterface()
-        video = Video(
-            input_video_path=input_video,
-            video_name=video_name,
-            skip_frames=1,
-            ui=ui
-        )
-
-        video_frames = video.get_frame(skip_frames=1)
-        video.create_window('output')
-
-        for frame in video_frames:
-            process_frame(
-                video=video,
-                inference=inference,
-                frame=frame,
-                ort_session=ort_session
-            )
 
 
 if __name__ == '__main__':

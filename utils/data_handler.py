@@ -4,6 +4,7 @@ import torch
 import onnx
 from torch.utils.data import Dataset
 import onnxruntime
+import torchvision.transforms as transforms
 import numpy as np
 # cv2.namedWindow('img', cv2.WINDOW_GUI_NORMAL)
 
@@ -40,6 +41,21 @@ class CustomDataset(Dataset):
 
 
 class DataHandler:
+    def __init__(self):
+        self.train_transform = None
+
+    def set_train_transform(self, image_resolution):
+        self.train_transform = transforms.Compose(
+            [
+                transforms.ToTensor(),
+                transforms.Resize(image_resolution),
+                transforms.Normalize(
+                    mean=(0.5, 0.5, 0.5),
+                    std=(0.5, 0.5, 0.5)
+                )
+            ]
+        )
+
     @staticmethod
     def save_torch_model(model, path: str):
         torch.save(model.state_dict(), path)

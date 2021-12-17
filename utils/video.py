@@ -23,7 +23,7 @@ class Video:
             filename=output_video_path,
             fourcc=cv2.VideoWriter_fourcc(*'mp4v'),
             fps=self.fps,
-            frameSize=(self.frame_width, self.frame_height)
+            frameSize=self.resolution
         )
 
     def __del__(self):
@@ -50,7 +50,6 @@ class Video:
 
                 frame_index += 1
         cv2.destroyAllWindows()
-        self.video_capture.set(cv2.CAP_PROP_POS_FRAMES, 0)
 
     def write_frame(self, frame: np.ndarray):
         self.video_writer.write(frame)

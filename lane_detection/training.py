@@ -1,15 +1,17 @@
 import torch
+import torch.nn as nn
 from torch.utils.tensorboard import SummaryWriter
 
 
 class ModelTraining:
-    def __init__(self, model, criterion, device, epochs: int,
+    def __init__(self, model, device, epochs: int,
                  learning_rate: float, batch_size: int, model_version: str):
         self.device = device
-        self.criterion = criterion
         self.epochs = epochs
         self.learning_rate = learning_rate
         self.batch_size = batch_size
+
+        self.criterion = nn.MSELoss()
         self.model = model.to(device)
         self.model_version = model_version
         self.optimiser = torch.optim.Adam(
