@@ -162,11 +162,10 @@ def run_inference(data_obj, args):
 
 def main():
     args = get_arguments()
-    image_resolution = args.train_res
     should_train = args.train
 
     data_obj = DataHandler()
-    data_obj.set_train_transform(image_resolution=image_resolution)
+    data_obj.set_train_transform(image_resolution=args.train_res)
 
     if should_train:
         train_model(

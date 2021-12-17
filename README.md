@@ -5,7 +5,7 @@ Lane detection using a CNN implemented in Pytorch
 
 ## Installation
 ```
-pip3 -r install requirements.txt
+python3.10 -m pip -r install requirements.txt
 ```
 
 ## Usage
