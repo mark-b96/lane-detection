@@ -2,6 +2,7 @@ import os
 import cv2
 import torch
 import onnx
+import json
 from torch.utils.data import Dataset
 import onnxruntime
 import torchvision.transforms as transforms
@@ -43,6 +44,7 @@ class CustomDataset(Dataset):
 class DataHandler:
     def __init__(self):
         self.train_transform = None
+        self.config = None
 
     def set_train_transform(self, image_resolution):
         self.train_transform = transforms.Compose(
@@ -55,6 +57,14 @@ class DataHandler:
                 )
             ]
         )
+
+    def set_config(self, config):
+        self.config = config
+
+    @staticmethod
+    def load_json_file(file_path: str):
+        with open(file_path, 'r') as f:
+            return json.load(f)
 
     @staticmethod
     def save_torch_model(model, path: str):

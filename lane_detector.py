@@ -54,24 +54,14 @@ def get_arguments() -> argparse.Namespace:
         type=str,
         default='/home/mark/Documents/ml_data/lane_detection/BDD/test/labels'
     )
-    a.add_argument(
-        '--batch_size',
-        type=int,
-        help='Batch size used for model training',
-        default=8
-    )
-    a.add_argument(
-        '--train_res',
-        type=tuple,
-        default=(80, 80)
-    )
 
     args = a.parse_args()
     return args
 
 
 def train_model(data_obj, args):
-    model_version = 'v25'
+    training_config = data_obj.config['Training']
+    model_version = training_config['model_version']
     train_dataset = CustomDataset(
         image_path=args.training_images_dir,
         label_path=args.training_labels_dir,
@@ -97,9 +87,9 @@ def train_model(data_obj, args):
     model_trainer = ModelTraining(
         model=cnn_model,
         device=device,
-        epochs=5,
-        learning_rate=0.001,
-        batch_size=args.batch_size,
+        epochs=training_config['epochs'],
+        learning_rate=training_config['learning_rate'],
+        batch_size=training_config['batch_size'],
         model_version=model_version
     )
 
@@ -123,9 +113,11 @@ def run_inference(data_obj, args):
     video_root = os.path.dirname(video_path)
     video_name, video_format = video_path.split('/')[-1].split('.')
     input_video = f'{video_root}/{video_name}.{video_format}'
+    inference_config = data_obj.config['Inference']
+    model_version = inference_config['model_version']
 
     ort_session_obj = data_obj.load_onnx_model(
-        path=f'{args.weights_dir}/model_v25.onnx'
+        path=f'{args.weights_dir}/model_v{model_version}.onnx'
     )
 
     inference_obj = Inference(
@@ -165,7 +157,10 @@ def main():
     should_train = args.train
 
     data_obj = DataHandler()
-    data_obj.set_train_transform(image_resolution=args.train_res)
+    config_file = data_obj.load_json_file(file_path='./config/config.json')
+    data_obj.set_config(config=config_file)
+    image_res = tuple(data_obj.config['Training']['image_resolution'])
+    data_obj.set_train_transform(image_resolution=image_res)
 
     if should_train:
         train_model(
