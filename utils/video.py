@@ -5,8 +5,9 @@ import numpy as np
 
 
 class Video:
-    def __init__(self, input_video_path, video_name, skip_frames, ui):
-        self.ui = ui
+    def __init__(self, ui_obj, data_obj, input_video_path, video_name, skip_frames):
+        self.ui_obj = ui_obj
+        self.data_obj = data_obj
         self.input_video: str = input_video_path
         self.video_name: str = video_name
         self.skip_frames: int = skip_frames
@@ -16,6 +17,8 @@ class Video:
         self.frame_width = int(self.video_capture.get(cv2.CAP_PROP_FRAME_WIDTH))
         self.frame_height = int(self.video_capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
         self.resolution = (self.frame_width, self.frame_height)
+        self.inference_config = self.data_obj.config['inference']
+
         data_folder = os.path.dirname(self.input_video)
         output_video_path = f"{data_folder}/{self.video_name}_lane.mp4"
 
@@ -32,13 +35,14 @@ class Video:
     def __del__(self):
         self.video_capture.release()
 
-    @staticmethod
-    def create_window(window_name: str):
+    def create_window(self, window_name: str):
+        if not self.inference_config['display_output']:
+            return
         cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
 
     def get_frame(self, skip_frames: int) -> np.ndarray:
         while self.video_capture.isOpened():
-            key = self.ui.get_key()
+            key = self.ui_obj.get_key()
             if key == ord('p'):
                 self.is_playing = not self.is_playing
             if self.is_playing or key == ord(' '):
@@ -53,8 +57,11 @@ class Video:
         cv2.destroyAllWindows()
 
     def write_frame(self, frame: np.ndarray):
+        if not self.inference_config['create_video']:
+            return
         self.video_writer.write(frame)
 
-    @staticmethod
-    def display_frame(window_name: str, frame: np.ndarray):
+    def display_frame(self, window_name: str, frame: np.ndarray):
+        if not self.inference_config['display_output']:
+            return
         cv2.imshow(window_name, frame)

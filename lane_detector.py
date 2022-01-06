@@ -60,7 +60,7 @@ def get_arguments() -> argparse.Namespace:
 
 
 def train_model(data_obj, args):
-    training_config = data_obj.config['Training']
+    training_config = data_obj.config['training']
     model_version = training_config['model_version']
     train_dataset = CustomDataset(
         image_path=args.training_images_dir,
@@ -92,7 +92,7 @@ def train_model(data_obj, args):
         batch_size=training_config['batch_size'],
         model_version=model_version
     )
-
+    model_trainer.log_params()
     model_trainer.train(training_data=train_loader)
 
     data_obj.save_torch_model(
@@ -113,7 +113,7 @@ def run_inference(data_obj, args):
     video_root = os.path.dirname(video_path)
     video_name, video_format = video_path.split('/')[-1].split('.')
     input_video = f'{video_root}/{video_name}.{video_format}'
-    inference_config = data_obj.config['Inference']
+    inference_config = data_obj.config['inference']
     model_version = inference_config['model_version']
 
     ort_session_obj = data_obj.load_onnx_model(
@@ -126,10 +126,11 @@ def run_inference(data_obj, args):
 
     ui_obj = UserInterface()
     video_obj = Video(
+        ui_obj=ui_obj,
+        data_obj=data_obj,
         input_video_path=input_video,
         video_name=video_name,
         skip_frames=1,
-        ui=ui_obj
     )
 
     video_frames = video_obj.get_frame(skip_frames=1)
@@ -159,7 +160,7 @@ def main():
     data_obj = DataHandler()
     config_file = data_obj.load_json_file(file_path='./config/config.json')
     data_obj.set_config(config=config_file)
-    image_res = tuple(data_obj.config['Training']['image_resolution'])
+    image_res = tuple(data_obj.config['training']['image_resolution'])
     data_obj.set_train_transform(image_resolution=image_res)
 
     if should_train:

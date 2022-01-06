@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 from torch.utils.tensorboard import SummaryWriter
+from mlflow import log_metric, log_param
 
 
 class ModelTraining:
@@ -38,9 +39,17 @@ class ModelTraining:
 
                 self.running_loss += loss.item()
                 if (index+1) % 100 == 0:
+                    log_metric("training_loss", loss.item())
                     self.writer.add_scalar(
                         tag='training_loss',
                         scalar_value=loss.item(),
                         global_step=(epoch*dataset_len) + index
                     )
                     self.running_loss = 0
+
+    def log_params(self):
+        log_param("model_version", self.model_version)
+        log_param("epochs", self.epochs)
+        log_param("learning_rate", self.learning_rate)
+        log_param("batch_size", self.batch_size)
+        log_param("device", self.device)

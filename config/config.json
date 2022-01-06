@@ -1,12 +1,14 @@
 {
-  "Training": {
+  "training": {
     "learning_rate": 0.001,
     "epochs": 5,
     "batch_size": 8,
     "image_resolution": [80, 80],
     "model_version": 25
   },
-  "Inference": {
-   "model_version": 25
+  "inference": {
+    "model_version": 25,
+    "display_output": false,
+    "create_video": true
   }
 }
