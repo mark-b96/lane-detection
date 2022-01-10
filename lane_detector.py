@@ -1,4 +1,3 @@
-import os
 import torch
 import argparse
 
@@ -22,6 +21,12 @@ def get_arguments() -> argparse.Namespace:
         type=str,
         help='Path to input video',
         default='/home/mark/Videos/video_2.mp4'
+    )
+    a.add_argument(
+        '-o',
+        type=str,
+        help='Path to input video',
+        default='/home/mark/Videos/'
     )
     a.add_argument(
         '--train',
@@ -109,10 +114,6 @@ def train_model(data_obj, args):
 
 
 def run_inference(data_obj, args):
-    video_path = args.i
-    video_root = os.path.dirname(video_path)
-    video_name, video_format = video_path.split('/')[-1].split('.')
-    input_video = f'{video_root}/{video_name}.{video_format}'
     inference_config = data_obj.config['inference']
     model_version = inference_config['model_version']
 
@@ -128,8 +129,6 @@ def run_inference(data_obj, args):
     video_obj = Video(
         ui_obj=ui_obj,
         data_obj=data_obj,
-        input_video_path=input_video,
-        video_name=video_name,
         skip_frames=1,
     )
 
@@ -157,7 +156,10 @@ def main():
     args = get_arguments()
     should_train = args.train
 
-    data_obj = DataHandler()
+    data_obj = DataHandler(
+        src_video_path=args.i,
+        dst_video_dir=args.o
+    )
     config_file = data_obj.load_json_file(file_path='./config/config.json')
     data_obj.set_config(config=config_file)
     image_res = tuple(data_obj.config['training']['image_resolution'])

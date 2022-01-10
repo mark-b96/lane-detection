@@ -6,8 +6,6 @@ import json
 from torch.utils.data import Dataset
 import onnxruntime
 import torchvision.transforms as transforms
-import numpy as np
-# cv2.namedWindow('img', cv2.WINDOW_GUI_NORMAL)
 
 
 class CustomDataset(Dataset):
@@ -30,21 +28,14 @@ class CustomDataset(Dataset):
         if self.transform is not None:
             img = self.transform(img)
             label = self.transform(label)
-
-        # np_output = np.squeeze(img.numpy())
-        # np_output = np.transpose(np_output, (1, 2, 0))
-        # np_output = cv2.cvtColor(np_output, cv2.COLOR_RGB2BGR)
-        # cv2.imshow('img', np_output)
-
-        # cv2.imshow('label', label)
-        cv2.waitKey(0)
         return img, label
 
 
 class DataHandler:
-    def __init__(self):
-        self.train_transform = None
-        self.config = None
+    def __init__(self, src_video_path, dst_video_dir):
+        self.src_video_path: str = src_video_path
+        self.dst_video_dir: str = dst_video_dir
+        self.train_transform, self.config = None, None
 
     def set_train_transform(self, image_resolution):
         self.train_transform = transforms.Compose(

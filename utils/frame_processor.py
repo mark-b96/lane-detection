@@ -1,4 +1,5 @@
 import cv2
+from tqdm import tqdm
 
 
 class FrameProcessor:
@@ -7,6 +8,8 @@ class FrameProcessor:
         self.video_obj = video_obj
         self.inference_obj = inference_obj
         self.ort_session_obj = ort_session_obj
+
+        self.progress_bar = tqdm(total=video_obj.frame_count)
 
     def process_frame(self):
         predicted_image = self.inference_obj.predict_onnx(
@@ -18,3 +21,4 @@ class FrameProcessor:
         self.visualiser_obj.draw_lane(predicted_output=predicted_image)
         self.video_obj.display_frame('output', self.visualiser_obj.frame)
         self.video_obj.write_frame(self.visualiser_obj.frame)
+        self.progress_bar.update(1)

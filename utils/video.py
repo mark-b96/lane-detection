@@ -1,26 +1,26 @@
 import cv2
 import math
-import os
+from pathlib import Path
 import numpy as np
 
 
 class Video:
-    def __init__(self, ui_obj, data_obj, input_video_path, video_name, skip_frames):
+    def __init__(self, ui_obj, data_obj, skip_frames):
         self.ui_obj = ui_obj
         self.data_obj = data_obj
-        self.input_video: str = input_video_path
-        self.video_name: str = video_name
+        self.input_video: str = self.data_obj.src_video_path
+        self.video_name: str = Path(self.input_video).stem
         self.skip_frames: int = skip_frames
 
         self.video_capture = cv2.VideoCapture(self.input_video)
         self.fps = math.ceil(self.video_capture.get(cv2.CAP_PROP_FPS))
         self.frame_width = int(self.video_capture.get(cv2.CAP_PROP_FRAME_WIDTH))
         self.frame_height = int(self.video_capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        self.frame_count = int(self.video_capture.get(cv2.CAP_PROP_FRAME_COUNT))
         self.resolution = (self.frame_width, self.frame_height)
         self.inference_config = self.data_obj.config['inference']
 
-        data_folder = os.path.dirname(self.input_video)
-        output_video_path = f"{data_folder}/{self.video_name}_lane.mp4"
+        output_video_path = f"{self.data_obj.dst_video_dir}/{self.video_name}_lane.mp4"
 
         self.is_playing: bool = True
         self.frame_index: int = 0
