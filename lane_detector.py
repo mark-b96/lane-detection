@@ -11,8 +11,6 @@ from utils.user_interface import UserInterface
 from utils.visualisation import Visualiser
 from utils.frame_processor import FrameProcessor
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
 
 def get_arguments() -> argparse.Namespace:
     a = argparse.ArgumentParser()
@@ -72,7 +70,6 @@ def train_model(data_obj, args):
         label_path=args.training_labels_dir,
         transform=data_obj.train_transform
     )
-
     # imgs = torch.stack([img_t for img_t, _ in train_dataset], dim=3)
     #
     # # test_dataset = CustomDataset(
@@ -82,6 +79,7 @@ def train_model(data_obj, args):
     # # )
     # t_mean = imgs.view(3, -1).mean(dim=1)
     # t_std = imgs.view(3, -1).std(dim=1)
+    device = data_obj.get_device()
     cnn_model = CNN().to(device)
 
     train_loader = torch.utils.data.DataLoader(

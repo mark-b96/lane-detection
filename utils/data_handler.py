@@ -3,8 +3,9 @@ import cv2
 import torch
 import onnx
 import json
+from loguru import logger
 from torch.utils.data import Dataset
-import onnxruntime
+import onnxruntime as ort
 import torchvision.transforms as transforms
 
 
@@ -71,10 +72,27 @@ class DataHandler:
     def save_onnx_model(model, path: str, dummy_input):
         torch.onnx.export(model, dummy_input, path, opset_version=11)
 
-    @staticmethod
-    def load_onnx_model(path: str):
+    def load_onnx_model(self, path: str):
         model = onnx.load(path)
         onnx.checker.check_model(model)
         onnx.helper.printable_graph(model.graph)
-        ort_session = onnxruntime.InferenceSession(path)
+        exec_providers = self.get_exec_provider()
+        ort_session = ort.InferenceSession(
+            path_or_bytes=path,
+            providers=exec_providers
+            )
         return ort_session
+
+    @staticmethod
+    def get_exec_provider():
+        if torch.cuda.is_available():
+            logger.info(f'Using GPU: {torch.cuda.get_device_name(0)}')
+            return ['CUDAExecutionProvider']
+        else:
+            logger.info('Using device CPU')
+            return ['CPUExecutionProvider']
+
+    @staticmethod
+    def get_device():
+        return torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+

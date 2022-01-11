@@ -14,7 +14,11 @@ docker build -t lane-det-img .
 ```
 Run the docker container:
 ```
-sudo docker run -it -v /tmp/.X11-unix:/tmp/.X11-unix -v /home/mark:/home/mark --hostname $HOSTNAME --name lane-det-container lane-det-img
+docker run -it -v /tmp/.X11-unix:/tmp/.X11-unix -v /home/mark:/home/mark --hostname $HOSTNAME --name lane-det-container lane-det-img
+```
+Run the docker container on a GPU:
+```
+docker run --gpus all -it -v /tmp/.X11-unix:/tmp/.X11-unix -v /home/mark:/home/mark --hostname $HOSTNAME --name lane-det-container lane-det-img
 ```
 
 ## Usage
