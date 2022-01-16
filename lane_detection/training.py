@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+from loguru import logger
 from torch.utils.tensorboard import SummaryWriter
 from mlflow import log_metric, log_param
 
@@ -25,6 +26,7 @@ class ModelTraining:
 
     def train(self, training_data):
         dataset_len = len(training_data)
+        logger.info('Starting training...')
         for epoch in range(self.epochs):
             for index, (images, labels) in enumerate(training_data):
 
@@ -45,6 +47,7 @@ class ModelTraining:
                         scalar_value=loss.item(),
                         global_step=(epoch*dataset_len) + index
                     )
+                    logger.info(f'Loss: {loss.item()}')
                     self.running_loss = 0
 
     def log_params(self):

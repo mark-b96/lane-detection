@@ -70,21 +70,13 @@ def train_model(data_obj, args):
         label_path=args.training_labels_dir,
         transform=data_obj.train_transform
     )
-    # imgs = torch.stack([img_t for img_t, _ in train_dataset], dim=3)
-    #
-    # # test_dataset = CustomDataset(
-    # #     image_path=f'{models_root}/custom/test/images',
-    # #     label_path=f'{models_root}/custom/test/labels',
-    # #     transform=train_transform
-    # # )
-    # t_mean = imgs.view(3, -1).mean(dim=1)
-    # t_std = imgs.view(3, -1).std(dim=1)
+
     device = data_obj.get_device()
     cnn_model = CNN().to(device)
 
     train_loader = torch.utils.data.DataLoader(
         train_dataset,
-        batch_size=args.batch_size,
+        batch_size=training_config['batch_size'],
         shuffle=True
     )
     model_trainer = ModelTraining(

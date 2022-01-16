@@ -94,5 +94,7 @@ class DataHandler:
 
     @staticmethod
     def get_device():
-        return torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        logger.info(f'Device: {device}')
+        return device
 
