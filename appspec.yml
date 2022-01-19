@@ -20,7 +20,7 @@ os: linux
 # If you are not running any commands on the Amazon EC2 instance, then remove
 #   the "hooks" section altogether. A blank or incomplete "hooks" section
 #   may cause associated deployments to fail.
-#hooks:
+hooks:
 # For each deployment lifecycle event, specify multiple "location" entries
 #   if you want to run multiple scripts during that event.
 # You can specify "timeout" as the number of seconds to wait until failing the deployment
@@ -54,13 +54,10 @@ os: linux
 #      runas:
 ## During the BeforeInstall deployment lifecycle event, run the commands
 ##   in the script specified in "location".
-#  BeforeInstall:
-#    - location:
-#      timeout:
-#      runas:
-#    - location:
-#      timeout:
-#      runas:
+  BeforeInstall:
+    - location: scripts/install_docker.sh
+      timeout: 300
+      runas: root
 ## During the AfterInstall deployment lifecycle event, run the commands
 ##   in the script specified in "location".
 #  AfterInstall:
@@ -74,11 +71,8 @@ os: linux
 ##   in the script specified in "location".
 #  ApplicationStart:
 #    - location:
-#      timeout:
-#      runas:
-#    - location:
-#      timeout:
-#      runas:
+#      timeout: 300
+#      runas: root
 ## During the ValidateService deployment lifecycle event, run the commands
 ##   in the script specified in "location".
 #  ValidateService:
