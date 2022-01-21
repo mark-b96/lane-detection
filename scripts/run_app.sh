@@ -1,6 +1,6 @@
 #!/bin/bash
 
-AWS_ACCOUNT_ID=739366754163
+AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 AWS_REGION=eu-west-2
 ECR_DOCKER_IMG=lane-det-img:latest
 
