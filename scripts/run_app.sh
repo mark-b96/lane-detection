@@ -14,8 +14,8 @@ ECR_DOCKER_IMG=lane-det-img:latest
 
 if ! type "nvidia-smi" > /dev/null; then
     echo "Running on CPU"
-    docker run -v /home/${SUDO_USER}:/home/${SUDO_USER} --hostname $HOSTNAME --name lane-det-container ${ECR_DOCKER_IMG}
+    docker run -v /home/${SUDO_USER}:/home/${SUDO_USER} --hostname $HOSTNAME --name lane-det-container ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_DOCKER_IMG}
 else
     echo "Running on GPU"
-    docker run --gpus all -v /home/${SUDO_USER}:/home/${SUDO_USER} --hostname $HOSTNAME --name lane-det-container ${ECR_DOCKER_IMG}
+    docker run --gpus all -v /home/${SUDO_USER}:/home/${SUDO_USER} --hostname $HOSTNAME --name lane-det-container ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_DOCKER_IMG}
 fi
