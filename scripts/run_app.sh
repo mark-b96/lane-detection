@@ -1,6 +1,10 @@
 #!/bin/bash
 
-docker pull markb96/lane-det-repo:myfirstpush
+AWS_ACCOUNT_ID=739366754163
+AWS_REGION=eu-west-2
+ECR_DOCKER_IMG=lane-det-img:latest
+
+docker pull ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_DOCKER_IMG}
 
 if ! type "nvidia-smi" > /dev/null; then
     echo "Running on CPU"
