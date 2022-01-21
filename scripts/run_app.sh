@@ -4,6 +4,10 @@ AWS_ACCOUNT_ID=739366754163
 AWS_REGION=eu-west-2
 ECR_DOCKER_IMG=lane-det-img:latest
 
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+unzip awscliv2.zip
+./aws/install
+
 
 docker login -u AWS -p $(aws ecr get-login-password --region ${AWS_REGION}) ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
 
