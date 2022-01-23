@@ -11,9 +11,9 @@ os: linux
 #   "files" section altogether. A blank or incomplete "files" section
 #   may cause associated deployments to fail.
 
-files:
-  - source: /
-    destination: /home/ubuntu
+#files:
+#  - source: /
+#    destination:
 #  - source:
 #    destination:
 
