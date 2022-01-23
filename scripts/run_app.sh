@@ -21,7 +21,7 @@ if ! type "nvidia-smi" > /dev/null; then
     echo "Running on CPU"
     docker run --rm -v /home/${SUDO_USER}:/home/${SUDO_USER} -v /opt:/opt --hostname $HOSTNAME \
           --name lane-det-container ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_DOCKER_IMG} \
-           /bin/bash -c "cd ${PWD}; python3.8 lane_detector.py  --train True --weights_dir /home/${SUDO_USER}/weights --training_images_dir /home/${SUDO_USER}/training_data/images --training_labels_dir /home/${SUDO_USER}/training_data/labels"
+           /bin/bash -c "cd ${PWD}; python3.8 lane_detector.py --train True --weights_dir ~/weights --training_images_dir ~/training_data/images --training_labels_dir ~/training_data/labels"
 else
     echo "Running on GPU"
     docker run --rm --gpus all -v /home/${SUDO_USER}:/home/${SUDO_USER} -v /opt:/opt --hostname $HOSTNAME \
