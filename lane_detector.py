@@ -92,13 +92,13 @@ def train_model(data_obj, args):
 
     data_obj.save_torch_model(
         model=cnn_model,
-        path=f'{args.weights_path}/model_{model_version}.pth'
+        path=f'{args.weights_dir}/model_{model_version}.pth'
     )
 
     w, h = args.train_res
     data_obj.save_onnx_model(
         model=cnn_model,
-        path=f'{args.weights_path}/model_{model_version}.onnx',
+        path=f'{args.weights_dir}/model_{model_version}.onnx',
         dummy_input=torch.randn(1, 3, w, h)
     )
 
