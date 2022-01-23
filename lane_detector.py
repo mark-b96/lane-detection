@@ -95,7 +95,7 @@ def train_model(data_obj, args):
         path=f'{args.weights_dir}/model_{model_version}.pth'
     )
 
-    w, h = args.train_res
+    w, h = training_config["image_resolution"]
     data_obj.save_onnx_model(
         model=cnn_model,
         path=f'{args.weights_dir}/model_{model_version}.onnx',
