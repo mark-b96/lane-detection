@@ -20,7 +20,7 @@ class ModelTraining:
                                 lr=self.learning_rate
                             )
         self.writer = SummaryWriter(
-            f'runs/lane_det_{self.model_version}'
+            f'./runs/lane_det_{self.model_version}'
         )
         self.running_loss: int = 0
 
@@ -49,6 +49,7 @@ class ModelTraining:
                     )
                     logger.info(f'Loss: {loss.item()}')
                     self.running_loss = 0
+        logger.info('Training complete!')
 
     def log_params(self):
         log_param("model_version", self.model_version)

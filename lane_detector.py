@@ -30,7 +30,7 @@ def get_arguments() -> argparse.Namespace:
         '--train',
         type=bool,
         help='Run in training mode',
-        default=False
+        default=True
     )
     a.add_argument(
         '--weights_dir',
@@ -40,12 +40,12 @@ def get_arguments() -> argparse.Namespace:
     a.add_argument(
         '--training_images_dir',
         type=str,
-        default='/home/mark/Documents/ml_data/lane_detection/BDD/train/images'
+        default='/home/mark/Documents/ml_data/lane_detection/BDD/mini_batch/images'
     )
     a.add_argument(
         '--training_labels_dir',
         type=str,
-        default='/home/mark/Documents/ml_data/lane_detection/BDD/train/labels'
+        default='/home/mark/Documents/ml_data/lane_detection/BDD/mini_batch/labels'
     )
     a.add_argument(
         '--test_images_dir',

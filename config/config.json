@@ -4,7 +4,7 @@
     "epochs": 5,
     "batch_size": 8,
     "image_resolution": [80, 80],
-    "model_version": 25
+    "model_version": 27
   },
   "inference": {
     "model_version": 25,
